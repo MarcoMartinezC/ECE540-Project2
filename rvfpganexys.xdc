@@ -79,3 +79,28 @@ set_property -dict { PACKAGE_PIN E15   IOSTANDARD LVCMOS33 } [get_ports { i_acce
 set_property -dict { PACKAGE_PIN F14   IOSTANDARD LVCMOS33 } [get_ports { o_accel_mosi }]; #IO_L5N_T0_AD9N_15 Sch=acl_mosi
 set_property -dict { PACKAGE_PIN F15   IOSTANDARD LVCMOS33 } [get_ports { accel_sclk }]; #IO_L14P_T2_SRCC_15 Sch=acl_sclk
 set_property -dict { PACKAGE_PIN D15   IOSTANDARD LVCMOS33 } [get_ports { o_accel_cs_n }]; 
+
+##VGA connections
+#Red LED Signal - 4Bits
+set_property -dict { PACKAGE_PIN A3   IOSTANDARD LVCMOS33 } [get_ports { VGA_R_LED_TOP[0] }]; #4K Ohms
+set_property -dict { PACKAGE_PIN B4   IOSTANDARD LVCMOS33 } [get_ports { VGA_R_LED_TOP[1] }]; #2K Ohms
+set_property -dict { PACKAGE_PIN C5   IOSTANDARD LVCMOS33 } [get_ports { VGA_R_LED_TOP[2] }]; #1K Ohms
+set_property -dict { PACKAGE_PIN A4   IOSTANDARD LVCMOS33 } [get_ports { VGA_R_LED_TOP[3] }]; #510 Ohms
+
+##Green LED Signal - 4Bits
+set_property -dict { PACKAGE_PIN C6   IOSTANDARD LVCMOS33 } [get_ports { VGA_G_LED_TOP[0] }]; #4K Ohms
+set_property -dict { PACKAGE_PIN A5   IOSTANDARD LVCMOS33 } [get_ports { VGA_G_LED_TOP[1] }]; #2K Ohms
+set_property -dict { PACKAGE_PIN B6   IOSTANDARD LVCMOS33 } [get_ports { VGA_G_LED_TOP[2] }]; #1K Ohms
+set_property -dict { PACKAGE_PIN A6   IOSTANDARD LVCMOS33 } [get_ports { VGA_G_LED_TOP[3] }]; #510 Ohms
+
+##Blue LED Signal - 4Bits
+set_property -dict { PACKAGE_PIN B7   IOSTANDARD LVCMOS33 } [get_ports { VGA_B_LED_TOP[0] }]; #4K Ohms
+set_property -dict { PACKAGE_PIN C7   IOSTANDARD LVCMOS33 } [get_ports { VGA_B_LED_TOP[1] }]; #2K Ohms
+set_property -dict { PACKAGE_PIN D7   IOSTANDARD LVCMOS33 } [get_ports { VGA_B_LED_TOP[2] }]; #1K Ohms
+set_property -dict { PACKAGE_PIN D8   IOSTANDARD LVCMOS33 } [get_ports { VGA_B_LED_TOP[3] }]; #510 Ohms
+
+##HSYNC Signal
+set_property -dict { PACKAGE_PIN B11   IOSTANDARD LVCMOS33 } [get_ports { VGA_HSYNC_TOP }]; #Horizontal Sync Signal - 100 Ohms
+
+##VSYNC Signal
+set_property -dict { PACKAGE_PIN B12   IOSTANDARD LVCMOS33 } [get_ports { VGA_VSYNC_TOP }]; #Vertical Sync Signal - 100 Ohms
