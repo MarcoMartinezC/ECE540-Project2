@@ -20,7 +20,6 @@ module vgaModule
   input  wire           wb_stb_i,	// strobe input
   output wire [31:0]  wb_dat_o,	// output data bus
   output wire           wb_ack_o,	// normal termination
-  output wire           wb_err_o,	// termination w/ error
-  output wire          wb_inta_o);	// Interrupt request output
+  output wire           wb_err_o);// termination w/ error	
   
 endmodule 
