@@ -154,7 +154,20 @@ module veerwolf_core
     output wire        o_accel_sclk,
     output wire        o_accel_cs_n,
     output wire        o_accel_mosi,
-    input wire         i_accel_miso
+    input wire         i_accel_miso,
+	
+	
+	  // VGA Clock and Reset Inputs (from rvfpganexys.sv)
+    input wire         vga_pixel_clk_i,
+    input wire         vga_domain_rst_i, // Active-high, synchronized to vga_pixel_clk_i
+
+    // VGA Output Ports (to rvfpganexys.sv)
+    output wire [3:0]  VGA_R_o,
+    output wire [3:0]  VGA_G_o,
+    output wire [3:0]  VGA_B_o,
+    output wire        VGA_HS_o,
+    output wire        VGA_VS_o,
+    output wire        video_on_to_top_o
     );
 
 
@@ -474,6 +487,58 @@ module veerwolf_core
    assign wb_s2m_uart_dat = {24'd0, uart_rdt};
    assign wb_s2m_uart_err = 1'b0;
    assign wb_s2m_uart_rty = 1'b0;
+   
+   
+   // --- VGA Integration ---
+   // Declare signals for DTG
+   wire [11:0] dtg_pixel_row;
+   wire [11:0] dtg_pixel_column;
+   wire        dtg_video_on;
+   wire        dtg_hs, dtg_vs; // From DTG module
+
+   // Instantiate Display Timing Generator (dtg.v)
+   // It should be clocked by vga_pixel_clk_i and reset by vga_domain_rst_i
+   dtg dtg_inst (
+       .clock   (vga_pixel_clk_i),
+       .rst     (vga_domain_rst_i), // Active-high reset for VGA domain
+       .horiz_sync(dtg_hs),
+       .vert_sync (dtg_vs),
+       .video_on  (dtg_video_on),
+       .pixel_row (dtg_pixel_row),
+       .pixel_column(dtg_pixel_column),
+       .pix_num   () // Not used by vga_wb_controller
+   );
+   assign video_on_to_top_o = dtg_video_on; // Assign to the new output port
+
+   // Instantiate VGA Wishbone Controller
+ vga_wb_controller vga_controller_inst ( // Or simple_vga_wb_controller if you prefer that name for the module itself
+       // Wishbone Interface (wb_clk domain)
+       .wb_clk_i        (wb_clk),           // This should be clk_core (which is wb_clk in this context)
+       .wb_rst_i        (wb_rst),           // This should be the active-high reset for WB (e.g., ~rstn if rstn is core's active-low reset)
+       .wb_adr_i        (wb_m2s_vga_adr),
+       .wb_dat_i        (wb_m2s_vga_dat),
+       .wb_sel_i        (wb_m2s_vga_sel),
+       .wb_we_i         (wb_m2s_vga_we),
+       .wb_cyc_i        (wb_m2s_vga_cyc),
+       .wb_stb_i        (wb_m2s_vga_stb),
+       .wb_dat_o        (wb_s2m_vga_dat),
+       .wb_ack_o        (wb_s2m_vga_ack),
+       .wb_err_o        (wb_s2m_vga_err),
+
+       // VGA Pixel Clock Domain Interface
+       .vga_pix_clk_i   (vga_pixel_clk_i),    // Passed down from rvfpganexys
+       .vga_rst_i       (vga_domain_rst_i),   // Passed down from rvfpganexys
+       .video_on_i      (dtg_video_on),       // From the DTG instance in veerwolf_core.v
+
+       // VGA Output Signals
+       .vga_r_o         (VGA_R_o),            // To outputs of veerwolf_core.v
+       .vga_g_o         (VGA_G_o),
+       .vga_b_o         (VGA_B_o)
+   );
+   // Pass through HS and VS from DTG
+   assign VGA_HS_o = dtg_hs;
+   assign VGA_VS_o = dtg_vs;
+   assign wb_s2m_vga_rty = 1'b0; // Assuming no retry for VGA controller
 
    uart_top uart16550_0
      (// Wishbone slave interface

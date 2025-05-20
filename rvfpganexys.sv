@@ -52,7 +52,21 @@ module rvfpganexys
     output wire        o_accel_cs_n,
     output wire        o_accel_mosi,
     input wire         i_accel_miso,
-    output wire        accel_sclk
+    output wire        accel_sclk,
+	
+	//VGA Output Ports
+    output wire [3:0]  VGA_R,
+    output wire [3:0]  VGA_G,
+    output wire [3:0]  VGA_B,
+    output wire        VGA_HS,
+    output wire        VGA_VS,
+    
+        //Debug LED Outputs
+    output logic       dbg_vga_pixel_clk_activity_led, //To see if vga_pixel_clk is running
+    output logic       dbg_vga_domain_rst_led,         //to see state of vga_domain_rst (should be 0)
+    output logic       dbg_video_on_led                //state of video_on from DTG
+	
+	
     );
 
    wire [15:0]         gpio_out;
@@ -66,12 +80,60 @@ module rvfpganexys
    wire    rst_core;
    wire    user_clk;
    wire    user_rst;
+   
+   // VGA specific signals
+   wire vga_pixel_clk;       // VGA pixel clock (e.g., 31.5 MHz or 25.175 MHz)
+   wire vga_clk_locked;
+   wire rst_core_n = ~rst_core; // Active-low version if needed
+
+   // Reset for VGA clock domain logic (active-high, synchronized)
+   wire vga_domain_rst;
+   
+   wire video_on_from_core;  // To bring video_on signal up from veerwolf_core
 
    clk_gen_nexys clk_gen
      (.i_clk (user_clk),
       .i_rst (user_rst),
       .o_clk_core (clk_core),
       .o_rst_core (rst_core));
+	  
+	clk_wiz_0 vga_clk_wiz_inst (
+       .vga_clk(vga_pixel_clk),  // Output VGA pixel clock
+       .reset(~rstn),            // Input reset (active-high, from system rstn)
+       .clk_in1(clk)             // Input clock (100MHz system clock)
+   );
+
+   // Reset synchronizer for VGA clock domain
+   // Input is system rstn (active-low), output is vga_domain_rst (active-high)
+   reset_synchronizer vga_reset_sync_inst (
+       .clk_i(vga_pixel_clk),
+       .async_reset_n_i(rstn), // System active-low reset
+       .sync_reset_o(vga_domain_rst)
+   );  
+	  
+	  
+	      // --- Debug Logic ---
+    //debug clock attempt
+    reg [24:0] vga_clk_div_cnt = 0; 
+                                    
+    always_ff @(posedge vga_pixel_clk or posedge vga_domain_rst) begin
+        if (vga_domain_rst) begin
+            vga_clk_div_cnt <= 0;
+            dbg_vga_pixel_clk_activity_led <= 1'b0;
+        end else begin
+            vga_clk_div_cnt <= vga_clk_div_cnt + 1;
+            if (vga_clk_div_cnt == 25'd0) begin // Toggle when counter wraps
+                 dbg_vga_pixel_clk_activity_led <= ~dbg_vga_pixel_clk_activity_led;
+            end
+        end
+    end
+
+  
+    assign dbg_vga_domain_rst_led = vga_domain_rst; //low (0) for normal operation
+
+    //Video On LED - to veerwolf_core
+    assign dbg_video_on_led = video_on_from_core;
+
 
    AXI_BUS #(32, 64, 6, 1) mem();
    AXI_BUS #(32, 64, 6, 1) cpu();
@@ -259,7 +321,20 @@ module rvfpganexys
       .o_accel_sclk   (accel_sclk),
       .o_accel_cs_n   (o_accel_cs_n),
       .o_accel_mosi   (o_accel_mosi),
-      .i_accel_miso   (i_accel_miso));
+      .i_accel_miso   (i_accel_miso),
+	  
+	   //Pass VGA clock and reset down to veerwolf_core
+      .vga_pixel_clk_i (vga_pixel_clk),
+      .vga_domain_rst_i(vga_domain_rst),
+
+      //VGA outputs from veerwolf_core
+      .VGA_R_o (VGA_R),
+      .VGA_G_o (VGA_G),
+      .VGA_B_o (VGA_B),
+      .VGA_HS_o(VGA_HS),
+      .VGA_VS_o(VGA_VS)
+	  
+	  );
 
    always @(posedge clk_core) begin
       o_led[15:0] <= gpio_out[15:0];
