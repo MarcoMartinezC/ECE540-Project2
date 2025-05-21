@@ -154,7 +154,17 @@ module veerwolf_core
     output wire        o_accel_sclk,
     output wire        o_accel_cs_n,
     output wire        o_accel_mosi,
-    input wire         i_accel_miso
+    input wire         i_accel_miso,
+    
+    
+    //VGA connections
+    input wire         i_vga_pixel_clk,
+    output wire        o_vga_h_sync,
+    output wire        o_vga_v_sync,
+    output wire        o_vga_vid_en,
+    output wire [3:0]  o_vga_r,
+    output wire [3:0]  o_vga_g,
+    output wire [3:0]  o_vga_b
     );
 
 
@@ -350,6 +360,27 @@ module veerwolf_core
    wire [31:0] en_gpio;
    wire        gpio_irq;
 
+
+//vga controller instantiation
+vga_controller vga_ctrl_inst (
+    .i_clk      (wb_clk),
+    .i_rst      (wb_rst),
+    .i_wb_adr   (wb_m2s_vga_adr[5:0]),
+    .i_wb_dat_w (wb_m2s_vga_dat),
+    .i_wb_sel   (wb_m2s_vga_sel),
+    .i_wb_we    (wb_m2s_vga_we),
+    .i_wb_cyc   (wb_m2s_vga_cyc),
+    .i_wb_stb   (wb_m2s_vga_stb),
+    .o_wb_dat_r (wb_s2m_vga_dat),
+    .o_wb_ack   (wb_s2m_vga_ack),
+    .i_vga_clk  (i_vga_pixel_clk),
+    .o_vga_h_sync(o_vga_h_sync),
+    .o_vga_v_sync(o_vga_v_sync),
+    .o_vga_vid_en(o_vga_vid_en),
+    .o_vga_red  (o_vga_r),
+    .o_vga_green(o_vga_g),
+    .o_vga_blue (o_vga_b)
+);
 
 `ifdef ViDBo
 `elsif Pipeline

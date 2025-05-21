@@ -52,7 +52,17 @@ module rvfpganexys
     output wire        o_accel_cs_n,
     output wire        o_accel_mosi,
     input wire         i_accel_miso,
-    output wire        accel_sclk
+    output wire        accel_sclk,
+
+//vga outputs, RGB and vertical/horizontal sync
+    output wire        VGA_HS,
+    output wire        VGA_VS,
+    output wire [3:0]  VGA_R,
+    output wire [3:0]  VGA_G,
+    output wire [3:0]  VGA_B
+
+
+
     );
 
    wire [15:0]         gpio_out;
@@ -67,11 +77,22 @@ module rvfpganexys
    wire    user_clk;
    wire    user_rst;
 
+//VGA wires
+   wire    vga_pixel_clk; //31.5MHz clock
+   wire    vga_vid_en_internal; //vga controller enable signal
+
    clk_gen_nexys clk_gen
      (.i_clk (user_clk),
       .i_rst (user_rst),
       .o_clk_core (clk_core),
       .o_rst_core (rst_core));
+
+//clk_wiz_0 instance
+ clk_wiz_0 vga_clk_wiz_inst (
+       .clk_in1(clk),         //clock in
+       .reset(rst_core),      //Active high reset
+       .vga_clk(vga_pixel_clk) //Output vga pixel clock
+   );     
 
    AXI_BUS #(32, 64, 6, 1) mem();
    AXI_BUS #(32, 64, 6, 1) cpu();
@@ -259,8 +280,20 @@ module rvfpganexys
       .o_accel_sclk   (accel_sclk),
       .o_accel_cs_n   (o_accel_cs_n),
       .o_accel_mosi   (o_accel_mosi),
-      .i_accel_miso   (i_accel_miso));
+      .i_accel_miso   (i_accel_miso),
+      
 
+      //VGA connections
+      .i_vga_pixel_clk (vga_pixel_clk),       //connected from clk_wiz_0
+      .o_vga_h_sync    (VGA_HS),              
+      .o_vga_v_sync    (VGA_VS),              
+      .o_vga_vid_en    (vga_vid_en_internal), 
+      .o_vga_r         (VGA_R),               //red
+      .o_vga_g         (VGA_G),               //green
+      .o_vga_b         (VGA_B)                //blue    
+      
+      );
+     
    always @(posedge clk_core) begin
       o_led[15:0] <= gpio_out[15:0];
    end
