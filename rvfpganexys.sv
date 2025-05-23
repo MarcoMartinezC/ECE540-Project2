@@ -21,10 +21,6 @@
 //
 //********************************************************************************
 
-
-//test
-
-
 `default_nettype none
 module rvfpganexys
   #(parameter bootrom_file  = "boot_main.mem")
@@ -57,11 +53,11 @@ module rvfpganexys
     output wire        o_accel_mosi,
     input wire         i_accel_miso,
     output wire        accel_sclk,
-	  output wire [3:0]	VGA_R_LED_TOP,
-	  output wire [3:0]	VGA_G_LED_TOP,
-	  output wire [3:0]	VGA_B_LED_TOP,
-	  output wire 		VGA_VSYNC_TOP,
-	  output wire			VGA_HSYNC_TOP
+	output wire [3:0]	VGA_R_LED_TOP,
+	output wire [3:0]	VGA_G_LED_TOP,
+	output wire [3:0]	VGA_B_LED_TOP,
+	output wire 		VGA_VSYNC_TOP,
+	output wire			VGA_HSYNC_TOP
     );
 
    wire [15:0]         gpio_out;
@@ -81,16 +77,16 @@ module rvfpganexys
       .i_rst (user_rst),
       .o_clk_core (clk_core),
       .o_rst_core (rst_core));
-
-
-  wire vga_clk;   //VGA clock
+   
+   wire vga_clk;   //VGA clock
+   wire video_ON;
       
  clk_wiz_0 vgaClockInstance
    (
     // Clock out ports
     .vga_clk(vga_clk),     // output vga_clk
     // Status and control signals
-    .reset(1'b0), // input reset - we do not want to reset is so setting it to zero
+    .reset(rst_core), // input reset - we do not want to reset is so setting it to zero
    // Clock in ports
     .clk_in1(clk)      // input clk_in1 - this will be receiving the universal clock
 );
@@ -282,12 +278,13 @@ module rvfpganexys
       .o_accel_cs_n   (o_accel_cs_n),
       .o_accel_mosi   (o_accel_mosi),
       .i_accel_miso   (i_accel_miso),
-	    .VGA_CLK_CORE   (vga_clk),
-	    .VGA_R_LED_CORE (VGA_R_LED_TOP),
-	    .VGA_G_LED_CORE (VGA_G_LED_TOP),
-	    .VGA_B_LED_CORE (VGA_B_LED_TOP),
-	    .VGA_VSYNC_CORE (VGA_VSYNC_TOP),
-	    .VGA_HSYNC_CORE (VGA_HSYNC_TOP));
+	  .VGA_CLK_CORE   (vga_clk),
+	  .VGA_VIDEO_ON_CORE   (video_ON),
+	  .VGA_R_LED_CORE (VGA_R_LED_TOP),
+	  .VGA_G_LED_CORE (VGA_G_LED_TOP),
+	  .VGA_B_LED_CORE (VGA_B_LED_TOP),
+	  .VGA_VSYNC_CORE (VGA_VSYNC_TOP),
+	  .VGA_HSYNC_CORE (VGA_HSYNC_TOP));
 
    always @(posedge clk_core) begin
       o_led[15:0] <= gpio_out[15:0];
