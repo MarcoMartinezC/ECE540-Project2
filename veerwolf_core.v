@@ -155,12 +155,13 @@ module veerwolf_core
     output wire        o_accel_cs_n,
     output wire        o_accel_mosi,
     input wire         i_accel_miso,
-	input wire		VGA_CLK_CORE,
+	input wire			VGA_CLK_CORE,
+	output wire         VGA_VIDEO_ON_CORE,
 	output wire [3:0]	VGA_R_LED_CORE,
 	output wire [3:0]	VGA_G_LED_CORE,
 	output wire [3:0]	VGA_B_LED_CORE,
 	output wire 		VGA_VSYNC_CORE,
-	output wire		VGA_HSYNC_CORE);
+	output wire			VGA_HSYNC_CORE);
 
 
    localparam BOOTROM_SIZE = 32'h1000;
@@ -222,7 +223,7 @@ module veerwolf_core
    assign ram_rlast      = i_ram_rlast;
    assign ram_rvalid     = i_ram_rvalid;
    assign o_ram_rready   = ram_rready;
-
+   
    wire 		      wb_clk = clk;
    wire 		      wb_rst = ~rst_n;
 
@@ -230,7 +231,7 @@ module veerwolf_core
 
    wire [15:2] 		       wb_adr;
 
-   assign		       wb_m2s_io_adr = {16'd0,wb_adr,2'b00};
+   assign wb_m2s_io_adr = {16'd0,wb_adr,2'b00};
    assign wb_m2s_io_cti = 3'b000;
    assign wb_m2s_io_bte = 2'b00;
 
@@ -805,27 +806,28 @@ module veerwolf_core
 
       .scan_mode  (1'b0),
       .mbist_mode (1'b0));
-
-vgaModule vga(
+	  
+	  
+	  vgaModule vga(
 		.VGA_CLK     (VGA_CLK_CORE),
 		.VGA_RST     (rstn),
+		.VGA_VIDEO_ON (VGA_VIDEO_ON_CORE),
 		.VGA_R_LED   (VGA_R_LED_CORE),
 		.VGA_G_LED   (VGA_G_LED_CORE),
 		.VGA_B_LED   (VGA_B_LED_CORE),
 		.VGA_VSYNC   (VGA_VSYNC_CORE),
 		.VGA_HSYNC   (VGA_HSYNC_CORE),
 	
-	.wb_clk_i     (clk), 
+	    .wb_clk_i     (clk), 
         .wb_rst_i     (wb_rst), 
         .wb_cyc_i     (wb_m2s_vga_cyc), 
-        .wb_adr_i     ({2'b0,wb_m2s_vga_adr[5:2],2'b0}), 
+        .wb_adr_i     (wb_m2s_vga_adr[5:0]), 
         .wb_dat_i     (wb_m2s_vga_dat), 
-        .wb_sel_i     (4'b1111),
+        .wb_sel_i     (wb_m2s_vga_sel),
         .wb_we_i      (wb_m2s_vga_we), 
         .wb_stb_i     (wb_m2s_vga_stb), 
         .wb_dat_o     (wb_s2m_vga_dat),
-        .wb_ack_o     (wb_s2m_vga_ack), 
-	.wb_err_o     (wb_s2m_vga_err)); //end of the vga module
+        .wb_ack_o     (wb_s2m_vga_ack));
 
 endmodule
 
